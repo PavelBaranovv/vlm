@@ -16,13 +16,14 @@ from model_utils import load_model
 
 
 def extract_choice(text: str) -> str:
-    text = text.strip().upper()
-    match = re.search(r"\b([ABCD])\b", text)
-    if match:
-        return match.group(1)
-    for ch in text:
-        if ch in "ABCD":
-            return ch
+    t = (text or "").strip().upper()
+    t = t.strip(" \n\r\t.,;:!?)(")
+    if len(t) == 1 and t in "ABCD":
+        return t
+    if len(t) >= 2 and t[0] in "ABCD":
+        rest = t[1:].strip(" \n\r\t.,;:!?)(")
+        if rest == "":
+            return t[0]
     return ""
 
 
@@ -55,12 +56,12 @@ def eval_mmbench(model, processor, tokenizer, device: str, limit: int | None) ->
         prompt = (
             "<image>\n"
             "Выбери правильный вариант ответа по изображению.\n"
-            "Ответь только одной буквой: A, B, C или D.\n\n"
+            "Ответь строго одной буквой: A, B, C или D.\n\n"
             f"Вопрос: {ex['question']}"
             f"{hint_block}\n\n"
             f"A: {ex['A']}\nB: {ex['B']}\nC: {ex['C']}\nD: {ex['D']}\n"
         )
-        raw = generate(model, processor, tokenizer, ex["image"], prompt, device, max_new_tokens=8)
+        raw = generate(model, processor, tokenizer, ex["image"], prompt, device, max_new_tokens=2)
         pred = extract_choice(raw)
         gold = ex["answer"].strip().upper()
         ok = int(pred == gold)
