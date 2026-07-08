@@ -1,5 +1,4 @@
 {
   "model": "Intel/llava-gemma-2b",
-  "gqa_ru": null,
-  "mmbench_ru": null
+  "gqa_ru": 0.002128356254092993
 }
