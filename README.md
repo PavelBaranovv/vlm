@@ -23,3 +23,21 @@
 | `deepvk/LLaVA-Instruct-ru` | Обучение: диалоги по изображениям |
 | `deepvk/GQA-ru` | Обучение (train) + оценка (test) |
 | `deepvk/MMBench-ru` | Оценка |
+
+
+## Baseline
+
+Сначала фиксируем качество исходной модели `deepvk/llava-gemma-2b-lora` без дополнительного обучения.
+
+- Подробная инструкция: `docs/baseline_kaggle.md`
+- Ожидаемые метрики:
+  - `GQA-ru`: около `46.37`
+  - `MMBench-ru`: около `40.19`
+
+## Установка
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
