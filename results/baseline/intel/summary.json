@@ -1,0 +1,5 @@
+{
+  "model": "Intel/llava-gemma-2b",
+  "gqa_ru": null,
+  "mmbench_ru": null
+}

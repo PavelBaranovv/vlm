@@ -1,43 +1,34 @@
-# Vision-Language Model
+# ru-vlm-adaptation
 
-Дообучение русскоязычной VLM на открытых данных [deepvk](https://huggingface.co/collections/deepvk/vision-language-modeling-664dd7e4c257cc78e740f6bc) с оценкой на бенчмарках **GQA-ru** и **MMBench-ru**.
+Адаптация `Intel/llava-gemma-2b` к русскоязычным бенчмаркам.
 
 ## Цель
 
-Получить дообученную модель на базе `deepvk/llava-gemma-2b-lora`, которая показывает **прирост метрик** относительно исходной версии на русскоязычных бенчмарках.
+Обучить русскоязычную VLM на открытых данных [deepvk](https://huggingface.co/collections/deepvk/vision-language-modeling) и сравнить с `deepvk/llava-gemma-2b-lora`.
 
 ## Задачи
 
-1. Изучить архитектуру VLM и открытые ресурсы VK.
-2. Подготовить данные для обучения (`LLaVA-Instruct-ru`, `GQA-ru`).
-3. Дообучить модель методом LoRA.
-4. Оценить качество через `lmms-eval` на GQA-ru и MMBench-ru.
-5. Сравнить результаты с baseline и оформить отчёт.
+1. Baseline `Intel/llava-gemma-2b` на `GQA-ru` и `MMBench-ru`
+2. Подготовка train из `GQA-ru` и `LLaVA-Instruct-ru`
+3. LoRA fine-tune
+4. Повторная оценка
+5. Сравнение с референсом VK
 
-## Используемые данные VK
+## Данные VK
 
-| Ресурс | Роль в проекте |
-|--------|----------------|
-| `deepvk/llava-gemma-2b-lora` | Базовая модель для дообучения |
-| `deepvk/llava-saiga-8b` | Референс для сравнения (не обучаем) |
-| `deepvk/LLaVA-Instruct-ru` | Обучение: диалоги по изображениям |
-| `deepvk/GQA-ru` | Обучение (train) + оценка (test) |
-| `deepvk/MMBench-ru` | Оценка |
+| Датасет | Назначение |
+|---------|------------|
+| `GQA-ru` train | обучение |
+| `LLaVA-Instruct-ru` | обучение, нужен COCO |
+| `GQA-ru` testdev | оценка |
+| `MMBench-ru` | оценка |
+
+## Модели
+
+| Модель | Роль |
+|--------|------|
+| `Intel/llava-gemma-2b` | база для обучения |
+| `deepvk/llava-gemma-2b-lora` | референс VK |
 
 
-## Baseline
-
-Сначала фиксируем качество исходной модели `deepvk/llava-gemma-2b-lora` без дополнительного обучения.
-
-- Подробная инструкция: `docs/baseline_kaggle.md`
-- Ожидаемые метрики:
-  - `GQA-ru`: около `46.37`
-  - `MMBench-ru`: около `40.19`
-
-## Установка
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
+На Kaggle: GPU T4, Internet On.

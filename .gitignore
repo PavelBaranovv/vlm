@@ -10,7 +10,9 @@ venv/
 data/
 checkpoints/
 logs/
-results/baseline/
+results/baseline/intel/*
+!results/baseline/intel/*.json
+results/baseline/reference_vk.json
 results/finetuned/
 *.pt
 *.bin
