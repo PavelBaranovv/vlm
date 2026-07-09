@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import random
 from pathlib import Path
 from typing import Any
 
 import yaml
-from datasets import Dataset, load_dataset
+from datasets import Dataset, concatenate_datasets, load_dataset
 from PIL import Image
 from tqdm import tqdm
 
@@ -64,7 +65,7 @@ def load_gqa_train_samples(n_samples: int | None, seed: int, post_prompt: str) -
     instructions = load_dataset("deepvk/GQA-ru", "train_balanced_instructions", split="train")
     images = load_dataset("deepvk/GQA-ru", "train_balanced_images", split="train")
 
-    img_map = {str(row["id"]): row["image"] for row in images}
+    id_to_idx = {str(images[i]["id"]): i for i in range(len(images))}
     indices = list(range(len(instructions)))
     random.Random(seed).shuffle(indices)
     if n_samples is not None:
@@ -75,7 +76,8 @@ def load_gqa_train_samples(n_samples: int | None, seed: int, post_prompt: str) -
     for idx in tqdm(indices, desc="gqa-ru"):
         row = instructions[idx]
         image_id = str(row["imageId"])
-        if image_id not in img_map:
+        image_idx = id_to_idx.get(image_id)
+        if image_idx is None:
             skipped += 1
             continue
 
@@ -85,8 +87,10 @@ def load_gqa_train_samples(n_samples: int | None, seed: int, post_prompt: str) -
             {"role": "user", "content": f"<image>\n{question}\n{post_prompt}"},
             {"role": "assistant", "content": answer},
         ]
-        examples.append({"source": "gqa-ru", "messages": messages, "image": img_map[image_id]})
+        examples.append({"source": "gqa-ru", "messages": messages, "image": images[image_idx]["image"]})
 
+    del instructions, images, id_to_idx
+    gc.collect()
     print(f"gqa-ru: {len(examples)} kept, {skipped} skipped")
     return examples
 
@@ -127,8 +131,24 @@ def load_llava_instruct_samples(
 
         examples.append({"source": "llava-instruct-ru", "messages": messages, "image": image})
 
+    del dataset
+    gc.collect()
     print(f"llava-instruct-ru: {len(examples)} kept, {skipped} skipped")
     return examples
+
+
+def build_dataset_in_chunks(examples: list[dict[str, Any]], chunk_size: int = 2000) -> Dataset:
+    chunks: list[Dataset] = []
+    total = len(examples)
+    for start in range(0, total, chunk_size):
+        end = min(start + chunk_size, total)
+        print(f"building chunk {start // chunk_size + 1}/{(total + chunk_size - 1) // chunk_size} ({end - start} examples)...")
+        chunks.append(Dataset.from_list(examples[start:end]))
+        gc.collect()
+    if len(chunks) == 1:
+        return chunks[0]
+    print("concatenating chunks...")
+    return concatenate_datasets(chunks)
 
 
 def save_manifest(examples: list[dict[str, Any]], path: Path) -> None:
@@ -172,21 +192,29 @@ def main() -> None:
     gqa_examples = load_gqa_train_samples(gqa_n, seed, post_prompt)
     llava_examples = load_llava_instruct_samples(llava_n, seed, coco_path)
     all_examples = gqa_examples + llava_examples
+    del gqa_examples, llava_examples
+    gc.collect()
     random.Random(seed).shuffle(all_examples)
 
     if not all_examples:
         raise RuntimeError("empty dataset")
 
-    dataset = Dataset.from_list(all_examples)
+    print(f"building dataset from {len(all_examples)} examples...")
+    dataset = build_dataset_in_chunks(all_examples)
     dataset_path = output_dir / "train"
-    dataset.save_to_disk(str(dataset_path))
+    print(f"saving dataset to {dataset_path} ...")
+    dataset.save_to_disk(str(dataset_path), max_shard_size="500MB")
+    del dataset
+    gc.collect()
+    print("dataset saved")
     save_manifest(all_examples, output_dir / "train_manifest.jsonl")
+    print("manifest saved")
 
     stats = {
         "mode": args.mode,
         "total": len(all_examples),
-        "gqa_ru": len(gqa_examples),
-        "llava_instruct_ru": len(llava_examples),
+        "gqa_ru": sum(1 for ex in all_examples if ex["source"] == "gqa-ru"),
+        "llava_instruct_ru": sum(1 for ex in all_examples if ex["source"] == "llava-instruct-ru"),
         "seed": seed,
         "coco_dir": str(coco_path) if coco_path else None,
         "dataset_path": str(dataset_path),
