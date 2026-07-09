@@ -40,10 +40,19 @@ def llava_conversation_to_messages(conversations: list[dict[str, str]]) -> list[
 
 
 def resolve_coco_image(coco_dir: Path, image_rel_path: str) -> Image.Image | None:
+    rel_path = Path(image_rel_path)
+    parts = rel_path.parts
+    stripped_parts = parts[1:] if parts and parts[0] == "coco" else parts
+    stripped_path = Path(*stripped_parts) if stripped_parts else rel_path
+    filename = rel_path.name
+
     candidates = [
-        coco_dir / image_rel_path,
-        coco_dir / Path(image_rel_path).name,
-        coco_dir.parent / image_rel_path,
+        coco_dir / rel_path,
+        coco_dir / stripped_path,
+        coco_dir / filename,
+        coco_dir / "images" / stripped_path,
+        coco_dir.parent / rel_path,
+        coco_dir.parent / stripped_path,
     ]
     for path in candidates:
         if path.exists():
