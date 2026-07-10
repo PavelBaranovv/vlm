@@ -1,0 +1,6 @@
+{
+  "benchmark": "gqa-ru",
+  "accuracy": 0.44245252128356255,
+  "total": 12216,
+  "correct": 5405
+}

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 import torch
 import yaml
 from datasets import load_from_disk
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig
 from trl import SFTConfig, SFTTrainer
 
 from model_utils import load_model
@@ -21,6 +24,10 @@ def load_config(path: str) -> dict:
 
 
 def build_collator(processor):
+    image_token_id = None
+    if hasattr(processor, "image_token"):
+        image_token_id = processor.tokenizer.convert_tokens_to_ids(processor.image_token)
+
     def collate_fn(examples):
         texts = []
         images = []
@@ -38,6 +45,8 @@ def build_collator(processor):
         pad_id = processor.tokenizer.pad_token_id
         if pad_id is not None:
             labels[labels == pad_id] = -100
+        if image_token_id is not None:
+            labels[labels == image_token_id] = -100
         batch["labels"] = labels
         return batch
 
@@ -69,8 +78,6 @@ def main() -> None:
         bias="none",
         task_type="CAUSAL_LM",
     )
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
 
     dataset = load_from_disk(train_cfg["dataset_dir"])
     output_dir = Path(train_cfg["output_dir"])
@@ -89,7 +96,7 @@ def main() -> None:
         fp16=train_cfg.get("fp16", False),
         bf16=train_cfg.get("bf16", False),
         gradient_checkpointing=train_cfg.get("gradient_checkpointing", False),
-        max_length=train_cfg.get("max_seq_length"),
+        max_length=None,
         remove_unused_columns=False,
         dataset_kwargs={"skip_prepare_dataset": True},
         report_to=[],
@@ -100,8 +107,10 @@ def main() -> None:
         args=training_args,
         train_dataset=dataset,
         data_collator=build_collator(processor),
-        processing_class=processor.tokenizer,
+        processing_class=processor,
+        peft_config=peft_config,
     )
+    trainer.model.print_trainable_parameters()
     trainer.train()
     trainer.save_model(str(output_dir))
     processor.save_pretrained(str(output_dir))

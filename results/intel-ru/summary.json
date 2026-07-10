@@ -1,0 +1,5 @@
+{
+  "model": "checkpoints/intel-llava-gemma-2b-ru",
+  "mmbench_ru": 0.5869565217391305,
+  "gqa_ru": 0.44245252128356255
+}

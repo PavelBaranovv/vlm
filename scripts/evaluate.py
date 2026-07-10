@@ -16,14 +16,24 @@ from model_utils import load_model
 
 
 def extract_choice(text: str) -> str:
-    t = (text or "").strip().upper()
-    t = t.strip(" \n\r\t.,;:!?)(")
-    if len(t) == 1 and t in "ABCD":
-        return t
-    if len(t) >= 2 and t[0] in "ABCD":
-        rest = t[1:].strip(" \n\r\t.,;:!?)(")
-        if rest == "":
-            return t[0]
+    """Take the first A/B/C/D from the first non-empty line (handles 'A\\n ...')."""
+    t = (text or "").strip()
+    for line in t.splitlines():
+        line = line.strip().upper()
+        line = (
+            line.replace("А", "A")
+            .replace("В", "B")
+            .replace("С", "C")
+            .replace("Д", "D")
+            .replace("Б", "B")
+        )
+        line = line.strip(" \n\r\t.,;:!?)(")
+        if line and line[0] in "ABCD":
+            return line[0]
+    m = re.search(r"(?:ОТВЕТ|ANSWER|ВАРИАНТ)[:\s]*([ABCDАВСДБ])", t.upper())
+    if m:
+        ch = m.group(1)
+        return {"А": "A", "В": "B", "С": "C", "Д": "D", "Б": "B"}.get(ch, ch)
     return ""
 
 
@@ -61,7 +71,7 @@ def eval_mmbench(model, processor, tokenizer, device: str, limit: int | None) ->
             f"{hint_block}\n\n"
             f"A: {ex['A']}\nB: {ex['B']}\nC: {ex['C']}\nD: {ex['D']}\n"
         )
-        raw = generate(model, processor, tokenizer, ex["image"], prompt, device, max_new_tokens=2)
+        raw = generate(model, processor, tokenizer, ex["image"], prompt, device, max_new_tokens=8)
         pred = extract_choice(raw)
         gold = ex["answer"].strip().upper()
         ok = int(pred == gold)
