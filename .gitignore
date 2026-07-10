@@ -10,12 +10,12 @@ venv/
 data/
 checkpoints/
 logs/
-results/baseline/intel/*
-!results/baseline/intel/*metric.json
-!results/baseline/intel/summary.json
-results/intel-ru/*
-!results/intel-ru/*metric.json
-!results/intel-ru/summary.json
+results/Intel llava-gemma-2b/intel/*
+!results/Intel llava-gemma-2b/intel/*metric.json
+!results/Intel llava-gemma-2b/summary.json
+results/Intel llava-gemma-2b ru-adapted/*
+!results/Intel llava-gemma-2b ru-adapted/*metric.json
+!results/Intel llava-gemma-2b ru-adapted/summary.json
 results/reference/**
 !results/reference/**/
 !results/reference/**/*metric.json

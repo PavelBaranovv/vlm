@@ -2,17 +2,19 @@
 
 ```bash
 # Intel baseline
-python scripts/evaluate.py --model Intel/llava-gemma-2b --output-dir results/baseline/intel
+python scripts/evaluate.py \
+  --model Intel/llava-gemma-2b \
+  --output-dir "results/Intel llava-gemma-2b/intel"
 
-# Finetuned LoRA
+# Our RU-adapted LoRA
 CUDA_VISIBLE_DEVICES=0 python scripts/evaluate.py \
   --model checkpoints/intel-llava-gemma-2b-ru \
-  --output-dir results/intel-ru
+  --output-dir "results/Intel llava-gemma-2b ru-adapted"
 
 # VK reference (same script)
 CUDA_VISIBLE_DEVICES=0 python scripts/evaluate.py \
   --model deepvk/llava-gemma-2b-lora \
-  --output-dir results/reference/vk
+  --output-dir "results/deepvk llava-gemma-2b-lora"
 
 # One benchmark only / smoke test
 python scripts/evaluate.py --benchmark mmbench --limit 100

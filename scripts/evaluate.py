@@ -128,7 +128,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="Intel/llava-gemma-2b")
     parser.add_argument("--benchmark", choices=["mmbench", "gqa", "both"], default="both")
-    parser.add_argument("--output-dir", default="results/baseline/intel")
+    parser.add_argument("--output-dir", default="results/Intel llava-gemma-2b/intel")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--device", default="cuda:0")
     args = parser.parse_args()

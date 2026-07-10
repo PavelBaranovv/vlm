@@ -1,0 +1,6 @@
+{
+  "benchmark": "mmbench-ru",
+  "accuracy": 0.6381074168797954,
+  "total": 3910,
+  "correct": 2495
+}
