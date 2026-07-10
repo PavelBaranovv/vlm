@@ -9,6 +9,7 @@ venv/
 # Data & models
 data/
 checkpoints/
+models/
 logs/
 results/Intel llava-gemma-2b/intel/*
 !results/Intel llava-gemma-2b/intel/*metric.json
