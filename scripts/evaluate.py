@@ -16,7 +16,6 @@ from model_utils import load_model
 
 
 def extract_choice(text: str) -> str:
-    """Take the first A/B/C/D from the first non-empty line (handles 'A\\n ...')."""
     t = (text or "").strip()
     for line in t.splitlines():
         line = line.strip().upper()
